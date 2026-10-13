@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18243a">
+<meta name="description" content="Simulateur de jets de dés D6 pour Warhammer 40,000.">
+<title>Simulateur D6 — W40K</title>
+<style>
+:root{color-scheme:dark;--bg:#101722;--panel:#1a2637;--panel2:#223149;--text:#f3f5f8;--muted:#abb8c8;--red:#c83e4d;--gold:#f2c14e;--green:#a8d5a0}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#273850 0%,var(--bg) 55%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+main{width:min(100%,680px);margin:0 auto;padding:28px 0 40px}.eyebrow{color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(2rem,8vw,3.2rem);line-height:1.03;margin:8px 0 10px} .sub{color:var(--muted);margin:0 0 24px}
+.card{background:rgba(26,38,55,.94);border:1px solid #34445b;border-radius:20px;padding:20px;box-shadow:0 14px 40px #0004;margin:14px 0}.field-label{display:block;font-weight:750;margin-bottom:10px}.controls{display:flex;gap:10px}.controls input{min-width:0;flex:1;background:#111b29;color:var(--text);border:1px solid #53647a;border-radius:12px;padding:14px;font-size:1.2rem;font-weight:700}.controls button{border:0;border-radius:12px;padding:14px 20px;background:var(--red);color:white;font-size:1rem;font-weight:900;letter-spacing:.04em;cursor:pointer;box-shadow:0 4px 0 #812b36}.controls button:active{transform:translateY(2px);box-shadow:0 2px 0 #812b36}.hint{color:var(--muted);font-size:.82rem;margin:10px 0 0}.results{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.result{background:var(--panel2);border:1px solid #3b4c64;border-radius:14px;text-align:center;padding:12px 4px}.result .target{color:var(--gold);font-size:.8rem;font-weight:800}.result .count{font-size:1.65rem;font-weight:900;margin-top:4px}.result .caption{font-size:.69rem;color:var(--muted)}.dice-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.dice-heading h2{font-size:1.05rem;margin:0 0 14px}.dice-heading span{font-size:.8rem;color:var(--muted)}.dice{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px}.die{aspect-ratio:1;display:grid;place-items:center;background:#f4f3ee;color:#18243a;border-radius:11px;font-size:1.35rem;font-weight:950;box-shadow:inset 0 -4px 0 #c7c8c8;animation:pop .18s ease-out both}.die.six{background:var(--gold);box-shadow:inset 0 -4px 0 #c18d20}.empty{color:var(--muted);font-size:.95rem;padding:4px 0 0}.footer{color:var(--muted);text-align:center;font-size:.78rem;margin:22px 0}.error{color:#ffb6bd;min-height:1.25em;font-size:.84rem;margin-top:8px}@keyframes pop{from{opacity:.3;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+@media(max-width:390px){.card{padding:16px}.results{gap:5px}.result{padding:10px 2px}.result .count{font-size:1.4rem}.controls button{padding:13px}}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">Simulateur de bataille</div>
+<h1>Jets de dés D6</h1>
+<p class="sub">Un bouton, un nouveau jet. Que l’Empereur veille sur tes 6 !</p>
+<section class="card" aria-label="Lancer les dés">
+<label class="field-label" for="quantity">Nombre de dés</label>
+<div class="controls"><input id="quantity" type="number" min="1" max="1000" value="10" inputmode="numeric"><button id="roll" type="button">🎲 LANCER</button></div>
+<div id="error" class="error" aria-live="polite"></div>
+<p class="hint">Dés à 6 faces · de 1 à 1 000 dés par lancer</p>
+</section>
+<section class="card" aria-label="Résultats du lancer">
+<div class="results" id="results"></div>
+</section>
+<section class="card" aria-label="Dés obtenus">
+<div class="dice-heading"><h2>Résultats des dés</h2><span id="roll-caption"></span></div>
+<div id="dice" class="dice"><p class="empty">Appuie sur « Lancer » pour jouer.</p></div>
+</section>
+<p class="footer">Simulateur indépendant · rien n’est enregistré ni envoyé.</p>
+</main>
+<script>
+const thresholds=[6,5,4,3,2];
+const results=document.querySelector('#results'), diceBox=document.querySelector('#dice'), input=document.querySelector('#quantity'), error=document.querySelector('#error'), caption=document.querySelector('#roll-caption');
+function renderCounts(rolls){results.replaceChildren();for(const t of thresholds){const count=rolls.filter(n=>n>=t).length;const box=document.createElement('div');box.className='result';box.innerHTML=`<div class="target">${t===6?'6':t+'+'}</div><div class="count">${count}</div><div class="caption">${t===6?'six':`≥ ${t}`}</div>`;results.append(box)}}
+function roll(){const n=Number(input.value);if(!Number.isInteger(n)||n<1||n>1000){error.textContent='Entre un nombre entier compris entre 1 et 1 000.';input.focus();return}error.textContent='';const rolls=Array.from({length:n},()=>Math.floor(Math.random()*6)+1);renderCounts(rolls);diceBox.replaceChildren();const frag=document.createDocumentFragment();rolls.forEach((value,i)=>{const die=document.createElement('div');die.className='die'+(value===6?' six':'');die.textContent=value;die.setAttribute('aria-label',`Dé ${i+1} : ${value}`);die.style.animationDelay=`${Math.min(i,30)*12}ms`;frag.append(die)});diceBox.append(frag);caption.textContent=`${n} dé${n>1?'s':''} lancé${n>1?'s':''}`}
+document.querySelector('#roll').addEventListener('click',roll);input.addEventListener('keydown',e=>{if(e.key==='Enter')roll()});
+</script>
+</body></html>
